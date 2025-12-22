@@ -1,3 +1,14 @@
+---
+title: Restaurtant Rag Chatbot Backend
+emoji: 🌖
+colorFrom: yellow
+colorTo: blue
+sdk: docker
+sdk_version: "1.0"
+app_file: Dockerfile
+pinned: false
+---
+
 # Simple LLM Chatbot
 
 This project implements a simple chatbot using the Hugging Face `transformers` library and Microsoft's `DialoGPT-medium` model.
@@ -18,13 +29,5 @@ This project implements a simple chatbot using the Hugging Face `transformers` l
 
 -   It uses `microsoft/DialoGPT-medium`, a model trained on Reddit conversations, making it good for casual chit-chat.
 -   The script maintains a chat history context so the bot remembers previous turns in the conversation.
----
-title: Restaurtant Rag Chatbot Backend
-emoji: 🌖
-colorFrom: yellow
-colorTo: blue
-sdk: docker
-pinned: false
----
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
