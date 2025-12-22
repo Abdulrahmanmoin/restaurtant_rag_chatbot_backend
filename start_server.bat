@@ -1,0 +1,6 @@
+@echo off
+echo Installing dependencies...
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+echo Starting server...
+.venv\Scripts\python.exe main.py
+pause

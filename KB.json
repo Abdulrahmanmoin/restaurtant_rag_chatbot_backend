@@ -1,0 +1,236 @@
+{
+    "restaurant": {
+        "name": "Pizza Alchemcy",
+        "country": "Pakistan",
+        "services": [
+            "Dine-in",
+            "Takeaway",
+            "Home delivery",
+            "Online ordering via website/app",
+            "Catering",
+            "Birthday orders",
+            "Corporate orders",
+            "Franchise info"
+        ]
+    },
+    "payment_methods": [
+        "Cash on delivery",
+        "Online payment / card (if ordered via website/app)",
+        "Mobile wallet / e-wallet (if supported by online ordering)"
+    ],
+    "menu": {
+        "Pizza": {
+            "Royale Flavors": [
+                {
+                    "name": "Mama Mia Classic",
+                    "description": "Smoked Chicken, Beef Pepperoni, Onions, Green Peppers, Mushrooms, Olives, marinara & mozzarella"
+                },
+                {
+                    "name": "Wicked Blend",
+                    "description": "Chicken Tikka, Chicken Fajita, Smoked Chicken, Onions, Mushrooms, Green Peppers, Olives, marinara & mozzarella"
+                },
+                {
+                    "name": "Gypsy Euro",
+                    "description": "Chicken sausage, smoked chicken, olives, green pepper, mushroom, tomatoes, marinara & mozzarella"
+                },
+                {
+                    "name": "Godspell Beef Load",
+                    "description": "Beef pepperoni, beef sausages, mushrooms, green peppers, onions, black olives, marinara & mozzarella"
+                },
+                {
+                    "name": "Arabic Ranch Pizza",
+                    "description": "Chicken Mughlai, Chicken Arabic Kebap, Chicken Seekh Kebap, veggies, mozzarella & Arabic Ranch sauce"
+                },
+                {
+                    "name": "Habanero Kick Pizza",
+                    "description": "Buffalo Chicken, Capsicum, Onions, Tomatoes, Cilantro, Habanero Sauce, Marinara, Mozzarella & spicy Habanero Sauce"
+                },
+                {
+                    "name": "Jamaican BBQ",
+                    "description": "Buffalo Chicken, Green Tikka, Sweet Corns, Green Onions, Jalapenos, BBQ Ranch Sauce & Mozzarella"
+                },
+                {
+                    "name": "All Cheese Pizza",
+                    "description": "Marinara sauce + extra mozzarella cheese"
+                },
+                {
+                    "name": "All Veggie Pizza",
+                    "description": "Capsicum, Onion, Sweet Corn, Mushrooms, Tomatoes, Olives, marinara & mozzarella"
+                }
+            ],
+            "Other / Specialty Pizzas": [
+                {
+                    "name": "Chicago Bold Fold Pizza",
+                    "description": "Beef Pepperoni, marinara & mozzarella"
+                },
+                {
+                    "name": "Phantom Pizza",
+                    "description": "Chicken Tikka, Chicken Sausage, Chicken Seekh, Onions, Capsicum, Jalapeno, Olives, marinara & mozzarella"
+                },
+                {
+                    "name": "Dancing Fajita Pizza",
+                    "description": "Chicken Fajita, Capsicum, Onions, Jalapeno, marinara & mozzarella"
+                },
+                {
+                    "name": "Tarzan Tikka Pizza",
+                    "description": "Chicken Tikka, Onion, marinara & mozzarella"
+                },
+                {
+                    "name": "Mughlai Beast Pizza",
+                    "description": "Chicken Mughlai, Onion, mozzarella"
+                }
+            ],
+            "King Crust Pizzas": [
+                {
+                    "name": "King Crust Chicken (Large)",
+                    "description": "Stuffed crust with kabab, extra cheese, extra chicken mughlai, smoked chicken strips, vegetables, olives, etc."
+                },
+                {
+                    "name": "King Crust Beef (Large)",
+                    "description": "Stuffed crust with kabab, ground beef, beef pepperoni, extra cheese, vegetables, olives, etc."
+                }
+            ]
+        },
+        "Appetizers & Starters": [
+            {
+                "name": "Garlic Bread",
+                "description": "Baked bread with garlic sauce"
+            },
+            {
+                "name": "Mozzarella Bread",
+                "description": "Bread coated in garlic butter topped with cheese and baked"
+            },
+            {
+                "name": "Oven Baked Potato Wedges",
+                "description": "Thick potato wedges baked to perfection"
+            },
+            {
+                "name": "Chicken Mega Bites",
+                "description": "Crispy chicken breast bites with golden crumb coating"
+            },
+            {
+                "name": "Pizza Roll",
+                "description": "Chicken Mughlai, garlic ranch, mozzarella, onions, capsicum, tomatoes, jalapenos rolled pizza-style"
+            }
+        ],
+        "Chicken Wings": [
+            {
+                "name": "Plain Wings",
+                "description": "Crispy & spicy wings"
+            },
+            {
+                "name": "Garlic Mayo Wings",
+                "description": "Wings coated in creamy garlic-mayo dressing"
+            },
+            {
+                "name": "BBQ Ranch Wings",
+                "description": "Wings topped with sweet smoky BBQ-ranch sauce"
+            },
+            {
+                "name": "Jalapeno Ranch Wings",
+                "description": "Wings with spicy jalapeno ranch dressing"
+            },
+            {
+                "name": "Habanero Wings",
+                "description": "Wings with spicy red habanero ranch dressing"
+            }
+        ],
+        "Calzones": [
+            {
+                "name": "Kebab Zone Calzone",
+                "description": "Chapli Kebab, Chicken Seekh Kebab, Chicken Mughlai, Tomatoes, Capsicum, Arabic Ranch Sauce"
+            },
+            {
+                "name": "Chicken Zone Calzone",
+                "description": "Chicken Tikka, Chicken Seekh Kebab, Chicken Sausages, Jalapenos, Garlic Ranch Sauce, Capsicum"
+            }
+        ],
+        "Pastas": [
+            {
+                "name": "BBQ Ranch Pasta",
+                "description": "Chicken Tikka, olives, BBQ-Ranch sauce & mozzarella"
+            },
+            {
+                "name": "Spicy Garlic Ranch Pasta",
+                "description": "Chicken Fajita, jalapenos, garlic ranch sauce & mozzarella"
+            },
+            {
+                "name": "Smokey Joe’s Pasta",
+                "description": "Chicken sausage, mushrooms, classic sauce & mozzarella"
+            }
+        ],
+        "Kids Meal": [
+            {
+                "name": "Kiddy Meal",
+                "description": "Small/8-inch star pizza + slice juice + kid’s puzzle"
+            },
+            {
+                "name": "Kids Chick N Fries Meal",
+                "description": "Megabites + crinkle fries + slice juice + puzzle"
+            }
+        ],
+        "Desserts": [
+            {
+                "name": "Chocolate Lava Cake",
+                "description": "Decadent cake with molten chocolate center"
+            }
+        ],
+        "Beverages & Sides": [
+            "Soft drinks (various)",
+            "Dipping sauces (e.g. BBQ Ranch, Garlic Mayo, Jalapeno Ranch)"
+        ]
+    },
+    "deals": {
+        "Combo Boxes": [
+            {
+                "name": "My Box",
+                "description": "Regular pizza + crinkle fries + 3 pcs garlic breads + 1 dip"
+            },
+            {
+                "name": "Slice Box",
+                "description": "20 inch pizza slice + fries + garlic breads + dip"
+            }
+        ],
+        "Crazy Doubles": [
+            {
+                "description": "2 Small Pizza"
+            },
+            {
+                "description": "2 Medium Pizza"
+            },
+            {
+                "description": "2 Large Pizza"
+            }
+        ],
+        "Cricket Deals & Discounts": [
+            {
+                "description": "Small pizza of choice (discounted price)"
+            },
+            {
+                "description": "20 inch pizza slice offer"
+            }
+        ],
+        "Pepsi Strong Deals": [
+            {
+                "description": "Medium Pizza + 2 small drinks"
+            }
+        ],
+        "Exclusive Deals": [
+            {
+                "description": "Medium Pizza + 3 pcs garlic bread + lava cake + 2 dips"
+            },
+            {
+                "description": "Large Pizza + 6 pcs garlic bread + lava cake + 2 dips"
+            }
+        ],
+        "Newly Added / Promotions": [
+            {
+                "name": "Pocket Pizza",
+                "description": "Hot, cheesy pocket-perfect pizza"
+            },
+            {
+                "name": "Creamy Supreme – Deep Pan (Large only)"
+            }
+        ]
+    }
+}
