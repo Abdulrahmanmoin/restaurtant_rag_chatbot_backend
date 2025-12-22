@@ -18,3 +18,13 @@ This project implements a simple chatbot using the Hugging Face `transformers` l
 
 -   It uses `microsoft/DialoGPT-medium`, a model trained on Reddit conversations, making it good for casual chit-chat.
 -   The script maintains a chat history context so the bot remembers previous turns in the conversation.
+---
+title: Restaurtant Rag Chatbot Backend
+emoji: 🌖
+colorFrom: yellow
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
