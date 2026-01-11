@@ -40,13 +40,11 @@ async def lifespan(app: FastAPI):
     
     # Cleanup
     print("Shutting down ChatBot Service...")
-    if bot.vector_store:
-        bot.vector_store.close()
     print("ChatBot Service Shutdown complete.")
 
 app = FastAPI(
     title="Restaurant Chatbot API",
-    description="API for the Pizza Restaurant Chatbot with RAG capabilities.",
+    description="API for the Pizza Restaurant Chatbot with keyword-based KB.json.",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -69,35 +67,85 @@ async def chat_endpoint(request: ChatRequest):
     Returns the bot's response and the updated conversation history.
     """
     try:
-        # Convert Pydantic models to list of dicts for the chatbot service
-        conversation_history = [msg.model_dump() for msg in request.history] if request.history else []
+        # Convert Pydantic models to dicts
+        input_history = [msg.model_dump() for msg in request.history] if request.history else []
         
-        # If history is empty, initialize with system prompt
-        if not conversation_history:
-            # We need to make sure system prompt is loaded
-            if not bot.full_system_prompt:
-                # Fallback if somehow not initialized correctly yet
-                 bot.full_system_prompt = "You are a helpful assistant."
-            
-            conversation_history = [{"role": "system", "content": bot.full_system_prompt}]
-        
-        # Generate response
-        # generate_response yields tokens but also updates conversation_history in place with the User message
-        response_generator = bot.generate_response(request.message, conversation_history)
+        # Check for Summary Mode (if we have a system message in history that isn't the persona)
+        # Note: Frontend history generally doesn't contain the 'system' persona unless we sent it.
+        # Our Logic: If history has a role='system', it's a summary we sent previously.
+        is_summary_mode = any(msg['role'] == 'system' for msg in input_history)
         
         full_response = ""
-        for token in response_generator:
-            full_response += token
+        new_history_objs = []
+        
+        if is_summary_mode:
+            # --- SUMMARY MODE ---
+            current_summary = next((m['content'] for m in input_history if m['role'] == 'system'), "")
             
-        # Append assistant response to history
-        conversation_history.append({"role": "assistant", "content": full_response})
-        
-        # Convert back to Pydantic models
-        updated_history = [Message(**msg) for msg in conversation_history]
-        
+            # Prepare generation context
+            generation_history = [{"role": "system", "content": bot.full_system_prompt}]
+            if current_summary:
+                generation_history.append({"role": "system", "content": f"Previous Conversation Summary: {current_summary}"})
+            
+            # Generate Response
+            response_generator = bot.generate_response(request.message, generation_history)
+            for token in response_generator:
+                full_response += token
+            # Update Summary
+            new_interaction = f"User: {request.message}\nAssistant: {full_response}"
+            new_summary = bot.summarize_conversation(current_summary, new_interaction)
+            
+            new_history_objs = [Message(role="system", content=new_summary)]
+            
+        else:   
+            # --- RAW MODE ---
+            # Check if we should switch to summary mode
+            # Threshold: 4 messages (2 user turns + 2 assistant responses)
+            if len(input_history) >= 4:
+                # --- SWITCH TO SUMMARY MODE ---
+                print("Switching to Summary Mode...")
+                
+                # 1. Summarize existing raw history
+                # We concat the raw messages to form a "previous interaction" block
+                raw_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in input_history])
+                initial_summary = bot.summarize_conversation("", raw_text)
+                
+                # 2. Generate Response using this summary
+                generation_history = [{"role": "system", "content": bot.full_system_prompt}]
+                generation_history.append({"role": "system", "content": f"Previous Conversation Summary: {initial_summary}"})
+                
+                response_generator = bot.generate_response(request.message, generation_history)
+                for token in response_generator:
+                    full_response += token
+                
+                # 3. Create Final Summary
+                new_interaction = f"User: {request.message}\nAssistant: {full_response}"
+                final_summary = bot.summarize_conversation(initial_summary, new_interaction)
+                
+                new_history_objs = [Message(role="system", content=final_summary)]
+                
+            else:
+                # --- STAY IN RAW MODE ---
+                
+                # Prepare generation context: System Prompt + Raw History
+                generation_history = [{"role": "system", "content": bot.full_system_prompt}]
+                generation_history.extend(input_history)
+                
+                # Generate Response
+                # Note: generate_response appends the new user message to conversation_history internally
+                response_generator = bot.generate_response(request.message, generation_history)
+                for token in response_generator:
+                    full_response += token
+                
+                # Return updated raw history
+                # We need to take the input history + new user msg + new asst msg
+                new_history_objs = [Message(**m) for m in input_history]
+                new_history_objs.append(Message(role="user", content=request.message))
+                new_history_objs.append(Message(role="assistant", content=full_response))
+
         return ChatResponse(
             response=full_response,
-            history=updated_history
+            history=new_history_objs
         )
 
     except Exception as e:
@@ -108,7 +156,7 @@ async def chat_endpoint(request: ChatRequest):
 @app.get("/health")
 def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "rag_enabled": bot.vector_store is not None}
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     import os

@@ -19,10 +19,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
     ca-certificates \
-    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and use virtual environment
@@ -42,9 +39,7 @@ FROM python:3.11-slim as runtime
 # Set environment variables for production
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
-ENV HF_HOME=/app/.cache/huggingface
-ENV SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence_transformers
+
 
 # Create non-root user for security (HF Spaces requirement)
 RUN useradd -m -u 1000 user
@@ -57,8 +52,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Create cache directories with proper permissions
-RUN mkdir -p /app/.cache/huggingface /app/.cache/sentence_transformers && \
-    chown -R user:user /app
+RUN chown -R user:user /app
 
 # Copy application files
 COPY --chown=user:user main.py .

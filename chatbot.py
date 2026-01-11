@@ -1,36 +1,26 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
-import torch
 import json
-from threading import Thread
-import sys
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
 
-# Import RAG vector store
-try:
-    from vector_store import VectorStore
-    RAG_ENABLED = True
-except ImportError:
-    RAG_ENABLED = False
-    print("Warning: vector_store module not found. Running without RAG.")
-
-
 def load_system_prompt():
     """Load system prompt from file"""
+    if not os.path.exists("systemPrompt.txt"):
+        return "You are a helpful assistant."
     with open("systemPrompt.txt", "r", encoding="utf-8") as f:
         content = f.read()
         content = content.strip().strip('"""').strip()
         return content
 
-
 def load_knowledge_base():
     """Load knowledge base from JSON file"""
+    if not os.path.exists("KB.json"):
+        return {}
     with open("KB.json", "r", encoding="utf-8") as f:
         return json.load(f)
-
 
 def get_kb_context(query, kb):
     """Retrieve relevant KB information based on query intents (fallback method)."""
@@ -44,7 +34,7 @@ def get_kb_context(query, kb):
         context.append(f"Services: {', '.join(r.get('services', []))}")
         
     # 2. Payment
-    if any(x in query for x in ['pay', 'pay', 'card', 'cash', 'money', 'wallet']):
+    if any(x in query for x in ['pay', 'card', 'cash', 'money', 'wallet']):
         context.append(f"Payment Methods: {', '.join(kb.get('payment_methods', []))}")
         
     # 3. Menu Categories
@@ -106,76 +96,43 @@ def get_kb_context(query, kb):
                 else: # fallback
                     context.append(f"- {item}")
 
-    # Log found context for debugging (optional)
-    if context:
-        print(f"\n[System: Found {len(context)} relevant sections]")
-        
     return "\n".join(context)
-
-
-def get_rag_intent(query):
-    """Determine RAG search intent/category based on query keywords."""
-    query = query.lower()
-    
-    # Map keywords to RAG.md categories
-    # Note: Category names must EXACTLY match the # Headers in RAG.md
-    
-    if any(x in query for x in ['deal', 'offer', 'promo', 'discount']):
-        return "DEALS & COMBOS"
-    
-    if any(x in query for x in ['pizza', 'flavor', 'crust', 'topping', 'menu']):
-        return "🍕 Pizza Menu"
-        
-    if any(x in query for x in ['starter', 'appetizer', 'wing', 'garlic', 'potato', 'bite', 'roll']):
-        return "APPETIZERS & STARTERS"
-        
-    if any(x in query for x in ['restaurant', 'location', 'address', 'time', 'open', 'close', 'contact', 'service', 'dine', 'takeaway', 'pay', 'method']):
-        return "🍕 Pizza Alchemy"
-        
-    if any(x in query for x in ['order', 'deliver', 'online', 'website', 'app']):
-        return "🍕 Pizza Alchemy"
-        
-    return None
 
 class ChatBotService:
     def __init__(self):
-        self.model = None
-        self.tokenizer = None
-        self.vector_store = None
+        self.client = None
         self.system_prompt = None
         self.kb = None
-        self.restaurant_name = "Pizza Restaurant"
+        self.restaurant_name = "Alchemy Pizza"
         self.full_system_prompt = ""
+        # self.model = "qwen/qwen3-4b:free" # Current valid Qwen3 free endpoint (Jan 2026)
+        # self.model = "Qwen/Qwen2.5-0.5B-Instruct" # Current valid Qwen3 free endpoint (Jan 2026)
+        self.model = "google/gemini-2.0-flash-exp:free" # Highly reliable free model
+
+    def load_summary_prompt(self):
+        """Load summary indication prompt from file"""
+        if not os.path.exists("summaryPrompt.txt"):
+            return "You are a helpful assistant that summarizes conversation traces."
+        with open("summaryPrompt.txt", "r", encoding="utf-8") as f:
+            return f.read().strip()
 
     def initialize(self):
-        print("Loading Qwen2.5-0.5B-Instruct...")
-        model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+        print("Initializing OpenRouter Client...")
+        api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("Warning: Neither OPENROUTER_API_KEY nor OPENAI_API_KEY found in environment.")
         
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        
-        print(f"Loading model {model_name}...", flush=True)
-        try:
-            if torch.cuda.is_available():
-                print(f"Using GPU: {torch.cuda.get_device_name(0)}", flush=True)
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    model_name,
-                    torch_dtype=torch.float16,
-                    device_map="auto"
-                )
-            else:
-                print("No GPU found - using CPU", flush=True)
-                self.model = AutoModelForCausalLM.from_pretrained(model_name)
-                
-            print("Model loaded successfully.", flush=True)
-        except Exception as e:
-            print(f"Error loading model: {e}", flush=True)
-            raise e
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
         
         # Load config
         try:
             self.system_prompt = load_system_prompt()
+            self.summary_prompt = self.load_summary_prompt()
             self.kb = load_knowledge_base()
-            self.restaurant_name = self.kb.get("restaurant", {}).get("name", "Pizza Restaurant")
+            self.restaurant_name = self.kb.get("restaurant", {}).get("name", "Alchemy Pizza")
             
             self.full_system_prompt = f"""{self.system_prompt}
             
@@ -190,34 +147,13 @@ class ChatBotService:
         except Exception as e:
             print(f"❌ Error loading config files: {e}")
             raise e
-            
-        # Initialize RAG
-        if RAG_ENABLED:
-            try:
-                mongodb_uri = os.getenv("MONGODB_URI")
-                if mongodb_uri and "<" not in mongodb_uri:
-                    print("Initializing RAG with MongoDB Vector Search...")
-                    self.vector_store = VectorStore()
-                    print("✅ RAG enabled with semantic search!")
-                else:
-                    print("⚠️  MongoDB URI not configured. Using keyword-based retrieval.")
-            except Exception as e:
-                print(f"⚠️  Could not initialize RAG: {e}")
 
     def generate_response(self, user_input, conversation_history=None):
         if conversation_history is None:
             conversation_history = [{"role": "system", "content": self.full_system_prompt}]
         
         # Context Retrieval
-        kb_context = ""
-        if self.vector_store:
-            rag_filter = get_rag_intent(user_input)
-            if rag_filter:
-                print(f"[System: Detected Intent -> {rag_filter}]")
-            kb_context = self.vector_store.get_rag_context(user_input, top_k=5, min_score=0.3, category_filter=rag_filter)
-        
-        if not kb_context:
-            kb_context = get_kb_context(user_input, self.kb)
+        kb_context = get_kb_context(user_input, self.kb)
             
         full_input = user_input
         if kb_context:
@@ -225,48 +161,76 @@ class ChatBotService:
             
         conversation_history.append({"role": "user", "content": full_input})
         
-        prompt = self.tokenizer.apply_chat_template(conversation_history, tokenize=False, add_generation_prompt=True)
-        inputs = self.tokenizer(prompt, return_tensors="pt")
-        
-        if torch.cuda.is_available():
-            inputs = inputs.to("cuda")
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=conversation_history,
+                stream=True,
+                max_tokens=500, # Explicitly limit output tokens to avoid provider-specific errors
+                extra_headers={
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "Restaurant Chatbot",
+                }
+            )
             
-        streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
-        
-        generation_kwargs = dict(
-            **inputs,
-            max_new_tokens=150,
-            do_sample=True,
-            top_p=0.9,
-            temperature=0.7,
-            pad_token_id=self.tokenizer.eos_token_id,
-            streamer=streamer
-        )
-        
-        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
-        thread.start()
-        
-        response_text = ""
-        for new_text in streamer:
-            response_text += new_text
-            yield new_text
+            response_text = ""
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    response_text += content
+                    yield content
             
-        thread.join()
+            return response_text
+        except Exception as e:
+            print(f"Error calling OpenRouter: {e}")
+            yield f"I'm sorry, I'm having trouble connecting right now. Error: {str(e)}"
+            return f"Error: {str(e)}"
+
+    def summarize_conversation(self, last_summary, new_interaction):
+        """Summarize the conversation to keep context small."""
         
-        # We need to return the pure assistant response to be added to history by the caller
-        # The caller is responsible for maintaining history state
-        return response_text
+        prompt = f"""
+        Previous Summary:
+        {last_summary}
+        
+        New Interaction:
+        {new_interaction}
+        
+        Request: Based on the system prompt instructions, create a new summary.
+        """
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.summary_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=250
+            )
+            content = response.choices[0].message.content
+            if content:
+                content = content.strip()
+                print(f"Generated Summary: {content[:50]}...") # Log start of summary
+                return content
+            else:
+                print("Warning: Empty summary received from LLM.")
+                # Fallback: maintain last summary + concise indication of new interaction
+                return f"{last_summary}\n[New Interaction]: {new_interaction[:100]}...".strip()
+                
+        except Exception as e:
+            print(f"Error generating summary: {e}")
+            # Fallback: maintain last summary + concise indication of new interaction
+            # IMPORTANT: Do not simply append the entire interaction loop if the model fails, 
+            # otherwise we hit rate limits with massive payloads.
+            return f"{last_summary}\n[Unsummarized Interaction]".strip()
 
 def chat():
     bot = ChatBotService()
     bot.initialize()
     
     print("\n" + "="*50)
-    print(f"🍕 {bot.restaurant_name} Chatbot")
-    if bot.vector_store:
-        print("🔍 RAG Mode: Semantic Search (MongoDB Vector DB)")
-    else:
-        print("📝 Mode: Keyword-based Retrieval")
+    print(f"🍕 {bot.restaurant_name} Chatbot (OpenRouter)")
     print("="*50)
     print("Type 'quit' to exit.\n")
     
@@ -280,8 +244,6 @@ def chat():
         
         if user_input.lower() in ["quit", "exit"]:
             print(f"Daniel Siddiqui: Thanks for visiting {bot.restaurant_name}! See you soon! 🍕")
-            if bot.vector_store:
-                bot.vector_store.close()
             break
             
         print("Daniel Siddiqui: ", end="", flush=True)
@@ -294,15 +256,11 @@ def chat():
             full_response += token
         print()
         
-        # Add assistant response to history (user input is added within generate_response but that's local scope if passed by value, 
-        # actually specialized handling needed because generate_response appends to passed list? 
-        # Wait, lists are mutable. But I constructed a new prompt inside.
-        # Let's check generate_response logic: `conversation_history.append(...)`. Yes, it modifies the list.
-        # But we also need to append the ASSISTANT'S response.
+        # Add assistant response to history
         messages.append({"role": "assistant", "content": full_response})
         
-        if len(messages) > 7:
-            messages = [messages[0]] + messages[-6:]
+        if len(messages) > 10: # Increased history limit as API can handle it better
+            messages = [messages[0]] + messages[-9:]
 
 if __name__ == "__main__":
     chat()

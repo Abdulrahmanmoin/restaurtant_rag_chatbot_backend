@@ -1,10 +1,4 @@
 fastapi
 uvicorn
 python-dotenv
-pymongo[srv]
-sentence-transformers
-transformers
-torch
-accelerate
-huggingface_hub
-certifi
+openai

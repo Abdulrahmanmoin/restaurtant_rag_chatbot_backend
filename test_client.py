@@ -5,7 +5,7 @@ import sys
 def test_api():
     print("Starting connection test...")
     max_retries = 150
-    url = "http://127.0.0.1:8000/health"
+    url = "http://127.0.0.1:7860/health"
     
     for i in range(max_retries):
         try:
@@ -16,7 +16,7 @@ def test_api():
                 print(f"Response: {response.json()}")
                 
                 # Try chat
-                chat_url = "http://127.0.0.1:8000/chat"
+                chat_url = "http://127.0.0.1:7860/chat"
                 chat_payload = {"message": "Hello, are you open?"}
                 print(f"Testing chat endpoint: {chat_url}")
                 chat_response = requests.post(chat_url, json=chat_payload, timeout=60)

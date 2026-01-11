@@ -18,26 +18,18 @@ Upload the following files to your Space repository:
 ├── Dockerfile          # Docker configuration
 ├── main.py             # FastAPI entry point (app instance)
 ├── chatbot.py          # Chatbot logic
-├── vector_store.py     # RAG/Vector store logic
 ├── requirements.txt    # Python dependencies
 ├── systemPrompt.txt    # System prompt configuration
 ├── KB.json             # Knowledge base
-├── RAG.md              # RAG content
 └── .env (optional)     # Environment variables
 ```
 
 ### 3. Configure Secrets (Recommended)
 
-Instead of using `.env` file, configure secrets in your HF Space:
+Instead of using `.env` file, configure secrets in your HF Space if needed (e.g. for API keys).
 
 1. Go to your Space → **Settings** → **Repository secrets**
-2. Add the following secrets:
-
-| Secret Name | Description |
-|-------------|-------------|
-| `MONGODB_URI` | Your MongoDB Atlas connection string |
-| `MONGODB_DB_NAME` | Database name (default: `restaurant_chatbot`) |
-| `MONGODB_COLLECTION_NAME` | Collection name (default: `kb_embeddings`) |
+2. Add any necessary secrets there.
 
 ### 4. Deploy
 
@@ -59,12 +51,7 @@ Once files are uploaded, Hugging Face will automatically build and deploy your S
 │  │  │  ┌─────────────────────────────────┐    │    │    │
 │  │  │  │  ChatBotService (chatbot.py)   │    │    │    │
 │  │  │  │  - Qwen2.5-0.5B-Instruct       │    │    │    │
-│  │  │  │  - Loaded once at startup       │    │    │    │
-│  │  │  └─────────────────────────────────┘    │    │    │
-│  │  │  ┌─────────────────────────────────┐    │    │    │
-│  │  │  │  VectorStore (vector_store.py) │    │    │    │
-│  │  │  │  - MongoDB Atlas Vector Search │    │    │    │
-│  │  │  │  - Sentence Transformers       │    │    │    │
+│  │  │  │  - KB.json Retrieval           │    │    │    │
 │  │  │  └─────────────────────────────────┘    │    │    │
 │  │  └─────────────────────────────────────────┘    │    │
 │  └─────────────────────────────────────────────────┘    │
@@ -78,7 +65,7 @@ Once files are uploaded, Hugging Face will automatically build and deploy your S
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/` | GET | Welcome message and API info |
-| `/health` | GET | Health check (model status, RAG status) |
+| `/health` | GET | Health check (model status) |
 | `/chat` | POST | Chat with the bot |
 | `/docs` | GET | Swagger UI documentation |
 | `/redoc` | GET | ReDoc documentation |
@@ -134,11 +121,6 @@ This deployment is optimized for HF Spaces **free tier (CPU-only)**:
 - Check `/health` endpoint
 - Model may still be loading (wait 1-2 minutes)
 - Check Space logs for initialization errors
-
-### MongoDB connection fails
-- Verify `MONGODB_URI` secret is set correctly
-- Ensure IP is whitelisted in MongoDB Atlas (use `0.0.0.0/0` for Spaces)
-- Check if MongoDB Atlas cluster is running
 
 ---
 
