@@ -57,10 +57,10 @@ RUN chown -R user:user /app
 # Copy application files
 COPY --chown=user:user main.py .
 COPY --chown=user:user chatbot.py .
-COPY --chown=user:user vector_store.py .
+
 COPY --chown=user:user systemPrompt.txt .
 COPY --chown=user:user KB.json .
-COPY --chown=user:user RAG.md .
+
 
 # Copy .env file if it exists (for environment variables)
 # Note: For production, use HF Spaces Secrets instead
