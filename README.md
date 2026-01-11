@@ -1,3 +1,13 @@
+---
+title: Restaurant Rag Chatbot Backend
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # Restaurant Chatbot Backend
 
 This project implements a restaurant chatbot using the OpenRouter API for LLM functionality and a keyword-based knowledge base.
