@@ -22,32 +22,42 @@ def load_knowledge_base():
     with open("KB.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
-def get_kb_context(query, kb):
+def get_kb_context(query, kb, conversation_history=None):
     """Retrieve relevant KB information based on query intents (fallback method)."""
     query = query.lower()
+    
+    # Extract context from conversation history if available
+    history_text = ""
+    if conversation_history:
+        for msg in conversation_history:
+            if msg.get('role') in ['user', 'assistant', 'system']:
+                history_text += " " + msg.get('content', '').lower()
+    
+    # Combine query with history for better context matching
+    combined_query = query + " " + history_text
     context = []
     
     # 1. Restaurant Info & Services
-    if any(x in query for x in ['restaurant', 'location', 'address', 'time', 'open', 'close', 'contact', 'service', 'delivery', 'dine', 'takeaway']):
+    if any(x in combined_query for x in ['restaurant', 'location', 'address', 'time', 'open', 'close', 'contact', 'service', 'delivery', 'dine', 'takeaway']):
         r = kb.get('restaurant', {})
         context.append(f"Restaurant: {r.get('name')} ({r.get('country')})")
         context.append(f"Services: {', '.join(r.get('services', []))}")
         
     # 2. Payment
-    if any(x in query for x in ['pay', 'card', 'cash', 'money', 'wallet']):
+    if any(x in combined_query for x in ['pay', 'card', 'cash', 'money', 'wallet']):
         context.append(f"Payment Methods: {', '.join(kb.get('payment_methods', []))}")
         
     # 3. Menu Categories
     menu = kb.get('menu', {})
     
     # Generic 'menu' query - show categories
-    if 'menu' in query:
+    if 'menu' in combined_query:
         cats = list(menu.keys())
         context.append(f"Available Menu Categories: {', '.join(cats)}")
         
     # Specific categories
-    # Pizza
-    if 'pizza' in query:
+    # Pizza - check both current query and history
+    if any(x in combined_query for x in ['pizza', 'ingredient', 'topping', 'king crust', 'contain', 'made of', 'include']):
         context.append("=== PIZZA MENU ===")
         for subcat, items in menu.get('Pizza', {}).items():
             context.append(f"[{subcat}]")
@@ -70,7 +80,7 @@ def get_kb_context(query, kb):
     }
     
     for kw, cat_key in cat_keywords.items():
-        if kw in query:
+        if kw in combined_query:
             items = menu.get(cat_key, [])
             context.append(f"\n[{cat_key}]")
             if isinstance(items, list):
@@ -82,7 +92,7 @@ def get_kb_context(query, kb):
                         context.append(f"- {item}")
                         
     # 4. Deals
-    if any(x in query for x in ['deal', 'offer', 'promo', 'discount', 'price', 'cost']):
+    if any(x in combined_query for x in ['deal', 'offer', 'promo', 'discount', 'price', 'cost']):
         context.append("\n=== DEALS & OFFERS ===")
         deals = kb.get('deals', {})
         for cat, items in deals.items():
@@ -107,7 +117,7 @@ class ChatBotService:
         self.full_system_prompt = ""
         # self.model = "qwen/qwen3-4b:free" # Current valid Qwen3 free endpoint (Jan 2026)
         # self.model = "Qwen/Qwen2.5-0.5B-Instruct" # Current valid Qwen3 free endpoint (Jan 2026)
-        self.model = "google/gemini-2.0-flash-exp:free" # Highly reliable free model
+        self.model = "models/gemini-2.5-flash" # Latest Gemini model
 
     def load_summary_prompt(self):
         """Load summary indication prompt from file"""
@@ -117,13 +127,13 @@ class ChatBotService:
             return f.read().strip()
 
     def initialize(self):
-        print("Initializing OpenRouter Client...")
-        api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+        print("Initializing Gemini Client...")
+        api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            print("Warning: Neither OPENROUTER_API_KEY nor OPENAI_API_KEY found in environment.")
+            print("Warning: GEMINI_API_KEY not found in environment.")
         
         self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             api_key=api_key,
         )
         
@@ -152,8 +162,8 @@ class ChatBotService:
         if conversation_history is None:
             conversation_history = [{"role": "system", "content": self.full_system_prompt}]
         
-        # Context Retrieval
-        kb_context = get_kb_context(user_input, self.kb)
+        # Context Retrieval - pass conversation history for better context
+        kb_context = get_kb_context(user_input, self.kb, conversation_history)
             
         full_input = user_input
         if kb_context:
@@ -166,11 +176,7 @@ class ChatBotService:
                 model=self.model,
                 messages=conversation_history,
                 stream=True,
-                max_tokens=500, # Explicitly limit output tokens to avoid provider-specific errors
-                extra_headers={
-                    "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "Restaurant Chatbot",
-                }
+                max_tokens=500, # Explicitly limit output tokens
             )
             
             response_text = ""
@@ -182,7 +188,7 @@ class ChatBotService:
             
             return response_text
         except Exception as e:
-            print(f"Error calling OpenRouter: {e}")
+            print(f"Error calling Gemini: {e}")
             yield f"I'm sorry, I'm having trouble connecting right now. Error: {str(e)}"
             return f"Error: {str(e)}"
 
@@ -230,7 +236,7 @@ def chat():
     bot.initialize()
     
     print("\n" + "="*50)
-    print(f"🍕 {bot.restaurant_name} Chatbot (OpenRouter)")
+    print(f"🍕 {bot.restaurant_name} Chatbot (Gemini)")
     print("="*50)
     print("Type 'quit' to exit.\n")
     

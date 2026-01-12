@@ -10,10 +10,10 @@ app_port: 7860
 
 # Restaurant Chatbot Backend
 
-This project implements a restaurant chatbot using the OpenRouter API for LLM functionality and a keyword-based knowledge base.
+This project implements a restaurant chatbot using the Google Gemini API for LLM functionality and a keyword-based knowledge base.
 
 ## Features
-- **OpenRouter Integration:** Uses high-quality LLMs via OpenRouter.
+- **Gemini Integration:** Uses high-quality LLMs via Google Gemini API.
 - **Knowledge Base:** Keyword-based retrieval from `KB.json` to provide accurate restaurant information.
 - **FastAPI:** Modern, fast (high-performance) web framework for building APIs.
 - **Streaming Support:** Real-time token streaming for a better user experience.
@@ -26,9 +26,9 @@ This project implements a restaurant chatbot using the OpenRouter API for LLM fu
     ```
 
 2.  **Environment Variables:**
-    Create a `.env` file with your OpenRouter API key:
+    Create a `.env` file with your Gemini API key:
     ```
-    OPENROUTER_API_KEY=your_key_here
+    GEMINI_API_KEY=your_key_here
     ```
 
 3.  **Run the Chatbot (CLI):**
@@ -43,5 +43,5 @@ This project implements a restaurant chatbot using the OpenRouter API for LLM fu
 
 ## How it works
 - The chatbot uses a keyword-based system to find relevant information in `KB.json`.
-- It prefixes the user's query with this context and sends it to an LLM via OpenRouter.
+- It prefixes the user's query with this context and sends it to an LLM via Google Gemini.
 - The LLM acts as "Daniel Siddiqui", a friendly waiter, using the provided context to answer customer questions.
